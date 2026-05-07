@@ -132,26 +132,15 @@ export default function Login() {
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-3xl"></div>
 
-        <div className="h-full w-full flex items-center justify-center relative z-10">
-          <div className="bg-card w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-border/50">
-            <div className="h-12 border-b border-border flex items-center px-4 gap-2 bg-muted/30">
-              <div className="w-3 h-3 rounded-full bg-red-400"></div>
-              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-              <div className="w-3 h-3 rounded-full bg-green-400"></div>
-            </div>
-            <div className="p-8 space-y-6">
-              <div className="h-8 w-1/3 bg-muted rounded-md animate-pulse"></div>
-              <div className="space-y-3">
-                <div className="h-4 w-full bg-muted rounded-md animate-pulse"></div>
-                <div className="h-4 w-5/6 bg-muted rounded-md animate-pulse"></div>
-                <div className="h-4 w-4/6 bg-muted rounded-md animate-pulse"></div>
-              </div>
-              <div className="pt-6 grid grid-cols-2 gap-4">
-                <div className="h-24 bg-muted rounded-lg animate-pulse"></div>
-                <div className="h-24 bg-muted rounded-lg animate-pulse"></div>
-              </div>
-            </div>
-          </div>
+        <div className="h-full w-full flex items-center justify-center relative z-10 p-12">
+          <motion.img 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            src="/assets/auth-banner.png" 
+            alt="Taskky Illustration" 
+            className="w-full h-auto max-w-lg object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
+          />
         </div>
       </div>
     </div>
