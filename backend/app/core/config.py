@@ -1,6 +1,6 @@
 from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List, Any, Optional
+from pydantic_settings import BaseSettings
+from typing import List, Any
 
 
 class Settings(BaseSettings):
@@ -8,16 +8,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     APP_ENV: str = "development"
 
-    # Set as Optional to avoid startup validation failure, but ensure they are provided in env
-    DATABASE_URL: Optional[str] = None
-    SECRET_KEY: Optional[str] = None
-    REFRESH_SECRET_KEY: Optional[str] = None
-    
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-
-    CORS_ORIGINS: str = "http://localhost:3000"
+    DATABASE_URL: str
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
@@ -29,6 +20,13 @@ class Settings(BaseSettings):
                 url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
             return url
         return v
+    SECRET_KEY: str
+    REFRESH_SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    CORS_ORIGINS: str = "http://localhost:3000"
 
     @property
     def cors_origins_list(self) -> List[str]:
@@ -38,12 +36,12 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         return self.APP_ENV == "production"
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
-    )
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": True,
+    }
 
 
+settings = Settings()
 settings = Settings()
