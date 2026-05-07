@@ -26,6 +26,13 @@ const WebSocketContext = createContext<WebSocketContextType>({
   lastRefreshEvent: null,
 });
 
+function getWsUrl(userId: string): string {
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  // Convert http(s) to ws(s)
+  const wsBase = apiUrl.replace(/^http/, 'ws');
+  return `${wsBase}/api/v1/ws/${userId}`;
+}
+
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -44,9 +51,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     }
 
     const connectWs = () => {
-      // In production you would use wss:// if hosted on https
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.hostname}:8000/api/v1/ws/${user.id}`;
+      const wsUrl = getWsUrl(user.id);
       
       const socket = new WebSocket(wsUrl);
       

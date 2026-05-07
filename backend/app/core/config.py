@@ -20,6 +20,7 @@ class Settings(BaseSettings):
                 url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
             return url
         return v
+
     SECRET_KEY: str
     REFRESH_SECRET_KEY: str
     ALGORITHM: str = "HS256"
@@ -40,8 +41,8 @@ class Settings(BaseSettings):
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "case_sensitive": True,
+        "extra": "ignore",
     }
 
 
-settings = Settings()
 settings = Settings()
