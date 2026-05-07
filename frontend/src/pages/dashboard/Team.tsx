@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, UserPlus, Mail, Loader2, Copy, Check, ChevronDown, FolderKanban, User as UserIcon } from 'lucide-react';
+import { Search, UserPlus, Mail, Loader2, Copy, Check, ChevronDown, FolderKanban, User as UserIcon, X } from 'lucide-react';
 import { projectsApi, usersApi, organizationApi } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useWebSocket } from '../../context/WebSocketContext';
 import { toast } from 'sonner';
+import { fuzzySearch, highlightMatches } from '../../lib/search';
 
 // --- Glass Dropdown Component ---
 function GlassDropdown({ value, onChange, options, placeholder, icon: Icon, renderOption }: {
@@ -186,10 +187,10 @@ export default function Team() {
     }
   };
 
-  const filtered = members.filter(m =>
-    m.user?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    m.user?.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = fuzzySearch(members, search, (m) => [
+    m.user?.full_name || '',
+    m.user?.email || '',
+  ]);
 
   const availableUsersToInvite = allUsers.filter(u => 
     !inviteProjectMembers.some(m => m.user_id === u.id)
@@ -300,7 +301,20 @@ export default function Team() {
           />
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search members..." className="pl-9 h-9 text-sm" value={search} onChange={e => setSearch(e.target.value)} />
+            <Input 
+              placeholder="Search members..." 
+              className="pl-9 pr-8 h-9 text-sm" 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+            />
+            {search && (
+              <button 
+                onClick={() => setSearch('')} 
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -327,10 +341,18 @@ export default function Team() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{member.user?.full_name || 'Unknown'}</p>
+                    <p className="text-sm font-medium truncate">
+                      {highlightMatches(member.user?.full_name || 'Unknown', search).map((seg, si) => 
+                        seg.highlight ? <mark key={si} className="bg-primary/20 text-primary rounded-sm px-0.5">{seg.text}</mark> : <span key={si}>{seg.text}</span>
+                      )}
+                    </p>
                     <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
                       <Mail className="w-3 h-3" />
-                      <span className="truncate">{member.user?.email || ''}</span>
+                      <span className="truncate">
+                        {highlightMatches(member.user?.email || '', search).map((seg, si) => 
+                          seg.highlight ? <mark key={si} className="bg-primary/20 text-primary rounded-sm px-0.5">{seg.text}</mark> : <span key={si}>{seg.text}</span>
+                        )}
+                      </span>
                     </div>
                   </div>
                   <Badge variant="secondary" className="text-[10px] px-2 shrink-0 capitalize">
