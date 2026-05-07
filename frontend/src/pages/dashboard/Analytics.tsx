@@ -113,20 +113,20 @@ export default function Analytics() {
                 <AreaChart data={data.productivity_trends} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#ffffff" stopOpacity={0.25}/>
+                      <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorAdded" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#94a3b8" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#22d3ee" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
                   <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
                   <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--foreground)' }} />
-                  <Area type="monotone" dataKey="completed" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorCompleted)" name="Completed" activeDot={{ r: 4 }} />
-                  <Area type="monotone" dataKey="added" stroke="#94a3b8" strokeWidth={2} fillOpacity={1} fill="url(#colorAdded)" name="Added" activeDot={{ r: 4 }} />
+                  <Area type="monotone" dataKey="completed" stroke="#ffffff" strokeWidth={2.5} fillOpacity={1} fill="url(#colorCompleted)" name="Completed" activeDot={{ r: 5, fill: '#ffffff' }} />
+                  <Area type="monotone" dataKey="added" stroke="#22d3ee" strokeWidth={2} strokeDasharray="5 5" fillOpacity={1} fill="url(#colorAdded)" name="Added" activeDot={{ r: 4, fill: '#22d3ee' }} />
                 </AreaChart>
               </ResponsiveContainer>
             </CardContent>
