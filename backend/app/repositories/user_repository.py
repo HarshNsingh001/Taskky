@@ -54,3 +54,14 @@ class UserRepository:
             select(User).where(User.organization_id == org_id)
         )
         return len(result.scalars().all())
+
+    async def get_org_admins(self, org_id: uuid.UUID) -> List[User]:
+        """Get all admin users in an organization"""
+        from app.models.user import UserRole
+        result = await self.db.execute(
+            select(User).where(
+                User.organization_id == org_id,
+                User.role == UserRole.ADMIN
+            )
+        )
+        return list(result.scalars().all())

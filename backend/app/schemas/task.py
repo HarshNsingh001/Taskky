@@ -57,6 +57,7 @@ class TaskResponse(BaseModel):
     assignee: Optional[UserBrief] = None
     creator: Optional[UserBrief] = None
     is_overdue: bool = False
+    revision_count: int = 0
 
     model_config = {"from_attributes": True}
 

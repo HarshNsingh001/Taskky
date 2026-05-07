@@ -86,8 +86,41 @@ async def update_task_status(
 ):
     service = TaskService(db)
     task = await service.update_status(task_id, data, current_user)
-    await manager.broadcast({"type": "refresh_tasks", "message": f"{current_user.full_name} changed a task status to {data.status}"}, exclude_user_id=str(current_user.id))
-    return success_response(data=task.model_dump(), message="Task status updated successfully")
+
+    task_data = task.model_dump()
+
+    # Targeted notifications based on workflow
+    if data.status == "review":
+        # Member submitted for review → notify admins
+        from app.repositories.user_repository import UserRepository
+        user_repo = UserRepository(db)
+        admins = await user_repo.get_org_admins(current_user.organization_id)
+        for admin in admins:
+            await manager.send_personal_message(
+                {"type": "refresh_tasks", "message": f"📋 {current_user.full_name} submitted '{task_data['title']}' for review"},
+                str(admin.id)
+            )
+    elif data.status == "todo" and task_data.get("assigned_to"):
+        # Admin sent task back to TODO → notify assigned member
+        revision = task_data.get("revision_count", 0)
+        await manager.send_personal_message(
+            {"type": "refresh_tasks", "message": f"🔁 Task '{task_data['title']}' sent back for revision #{revision}"},
+            str(task_data["assigned_to"])
+        )
+    elif data.status == "done" and task_data.get("assigned_to"):
+        # Admin approved → notify assigned member
+        await manager.send_personal_message(
+            {"type": "refresh_tasks", "message": f"✅ Task '{task_data['title']}' approved and completed!"},
+            str(task_data["assigned_to"])
+        )
+    else:
+        # Generic broadcast for other transitions
+        await manager.broadcast(
+            {"type": "refresh_tasks", "message": f"{current_user.full_name} changed task status to {data.status}"},
+            exclude_user_id=str(current_user.id)
+        )
+
+    return success_response(data=task_data, message="Task status updated successfully")
 
 
 @router.patch("/{task_id}/assign")

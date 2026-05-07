@@ -2,6 +2,7 @@ import uuid
 from typing import List
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
 from app.models.activity_log import ActivityLog, ActivityAction
@@ -52,6 +53,7 @@ class TaskService:
             assignee=UserBrief.model_validate(task.assignee) if task.assignee else None,
             creator=UserBrief.model_validate(task.creator) if task.creator else None,
             is_overdue=self._is_overdue(task),
+            revision_count=task.revision_count,
         )
 
     async def list_tasks(self, current_user: User, project_id: uuid.UUID = None, skip: int = 0, limit: int = 50) -> List[TaskResponse]:
@@ -186,40 +188,59 @@ class TaskService:
         if not task:
             raise NotFoundException("Task")
 
-        if current_user.role != UserRole.ADMIN:
+        old_status = task.status
+
+        # Role-based transition rules
+        if current_user.role == UserRole.ADMIN:
+            # Admin transitions
+            ADMIN_TRANSITIONS = {
+                TaskStatus.TODO: [TaskStatus.IN_PROGRESS],
+                TaskStatus.IN_PROGRESS: [TaskStatus.TODO, TaskStatus.REVIEW],
+                TaskStatus.REVIEW: [TaskStatus.DONE, TaskStatus.TODO],  # approve or reject
+                TaskStatus.DONE: [TaskStatus.TODO],  # reopen
+            }
+            if data.status not in ADMIN_TRANSITIONS.get(old_status, []):
+                raise ForbiddenException(f"Invalid transition from {old_status.value} to {data.status.value}")
+        else:
+            # Member transitions — can only move their own assigned tasks
             if task.assigned_to != current_user.id:
                 has_access = await self.project_repo.is_user_in_project(task.project_id, current_user.id)
                 if not has_access:
                     raise ForbiddenException("You can only update status of tasks assigned to you")
 
-        old_status = task.status
-        
-        VALID_TRANSITIONS = {
-            TaskStatus.TODO: [TaskStatus.IN_PROGRESS],
-            TaskStatus.IN_PROGRESS: [TaskStatus.TODO, TaskStatus.REVIEW],
-            TaskStatus.REVIEW: [TaskStatus.IN_PROGRESS, TaskStatus.DONE],
-            TaskStatus.DONE: [TaskStatus.REVIEW],
-        }
-
-        if data.status not in VALID_TRANSITIONS.get(old_status, []):
-            raise ForbiddenException(f"Invalid state transition from {old_status.value} to {data.status.value}")
+            MEMBER_TRANSITIONS = {
+                TaskStatus.TODO: [TaskStatus.IN_PROGRESS],
+                TaskStatus.IN_PROGRESS: [TaskStatus.TODO, TaskStatus.REVIEW],
+                # Members CANNOT move to DONE — only admin can approve
+            }
+            if data.status not in MEMBER_TRANSITIONS.get(old_status, []):
+                raise ForbiddenException(f"You don't have permission for this transition. Only admins can approve tasks.")
 
         task.status = data.status
+
+        # Track revision count when admin sends task back to TODO from REVIEW or DONE
+        if data.status == TaskStatus.TODO and old_status in (TaskStatus.REVIEW, TaskStatus.DONE):
+            task.revision_count = (task.revision_count or 0) + 1
 
         if data.status == TaskStatus.DONE and old_status != TaskStatus.DONE:
             task.completed_at = datetime.now(timezone.utc)
             await self.activity_repo.create(ActivityLog(
                 action=ActivityAction.TASK_COMPLETED,
-                details=f"Completed task '{task.title}'",
+                details=f"Approved and completed task '{task.title}'",
                 user_id=current_user.id,
                 task_id=task.id,
                 project_id=task.project_id,
             ))
         elif data.status != TaskStatus.DONE:
             task.completed_at = None
+            detail_msg = f"Changed task '{task.title}' status to {data.status.value}"
+            if data.status == TaskStatus.TODO and old_status == TaskStatus.REVIEW:
+                detail_msg = f"Sent task '{task.title}' back for revision (revision #{task.revision_count})"
+            elif data.status == TaskStatus.REVIEW:
+                detail_msg = f"Submitted task '{task.title}' for review"
             await self.activity_repo.create(ActivityLog(
                 action=ActivityAction.STATUS_CHANGED,
-                details=f"Changed task '{task.title}' status to {data.status.value}",
+                details=detail_msg,
                 user_id=current_user.id,
                 task_id=task.id,
                 project_id=task.project_id,
