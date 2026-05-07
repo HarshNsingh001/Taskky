@@ -41,6 +41,9 @@ class Project(Base):
     owner_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
@@ -51,6 +54,7 @@ class Project(Base):
     )
 
     owner = relationship("User", back_populates="owned_projects", lazy="selectin")
+    organization = relationship("Organization", back_populates="projects", lazy="noload")
     members = relationship("ProjectMember", back_populates="project", lazy="noload", cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="project", lazy="noload", cascade="all, delete-orphan")
     activity_logs = relationship("ActivityLog", back_populates="project", lazy="noload", cascade="all, delete-orphan")

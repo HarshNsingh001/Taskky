@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Layers, ArrowLeft, Loader2 } from 'lucide-react';
+import { Layers, ArrowLeft, Loader2, Copy, Check } from 'lucide-react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import React, { useState } from 'react';
@@ -18,8 +18,11 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('admin');
   const [inviteCode, setInviteCode] = useState('');
+  const [showInviteCode, setShowInviteCode] = useState(false);
+  const [generatedInviteCode, setGeneratedInviteCode] = useState('');
+  const [copied, setCopied] = useState(false);
 
-  if (user) {
+  if (user && !showInviteCode) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -29,6 +32,17 @@ export default function Signup() {
 
   const validatePassword = (pass: string) => {
     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(pass);
+  };
+
+  const handleCopyInviteCode = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedInviteCode);
+      setCopied(true);
+      toast.success("Invite code copied!");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,9 +70,16 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      await signup(`${firstName} ${lastName}`, email, password, role, inviteCode);
+      const org = await signup(`${firstName} ${lastName}`, email, password, role, inviteCode);
       toast.success("Account created successfully!");
-      navigate('/dashboard');
+      
+      if (role === 'admin' && org) {
+        // Show the invite code to the admin
+        setGeneratedInviteCode(org.invite_code);
+        setShowInviteCode(true);
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       const msg = err?.message || "Signup failed";
       toast.error(msg);
@@ -66,6 +87,58 @@ export default function Signup() {
       setLoading(false);
     }
   };
+
+  // Show invite code screen after admin signup
+  if (showInviteCode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-8">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-md text-center space-y-8"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <Layers className="w-8 h-8 text-primary" />
+          </div>
+
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Workspace Created! 🎉</h1>
+            <p className="text-muted-foreground text-sm">
+              Share this invite code with your team members so they can join your workspace.
+            </p>
+          </div>
+
+          <div className="bg-muted/50 border border-border rounded-2xl p-6 space-y-4">
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Team Invite Code</Label>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-xl font-mono font-bold tracking-wider text-foreground">
+                {generatedInviteCode}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-12 w-12 rounded-xl shrink-0"
+                onClick={handleCopyInviteCode}
+              >
+                {copied ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5" />}
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Members will use this code during signup to join your workspace automatically.
+            </p>
+          </div>
+
+          <Button
+            className="w-full h-11 rounded-xl font-semibold shadow-lg shadow-primary/20"
+            onClick={() => navigate('/dashboard')}
+          >
+            Go to Dashboard →
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-background flex-row-reverse">
@@ -143,7 +216,8 @@ export default function Signup() {
               {role === 'member' && (
                 <div className="space-y-2">
                   <Label htmlFor="inviteCode">Team Invite Code</Label>
-                  <Input id="inviteCode" placeholder="e.g. TASKKY-TEAM" required className="h-11" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
+                  <Input id="inviteCode" placeholder="e.g. TASKKY-A3F8X2" required className="h-11 font-mono uppercase tracking-wider" value={inviteCode} onChange={(e) => setInviteCode(e.target.value.toUpperCase())} />
+                  <p className="text-[10px] text-muted-foreground">Ask your team admin for the invite code</p>
                 </div>
               )}
 

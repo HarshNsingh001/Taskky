@@ -20,6 +20,89 @@ class TaskRepository:
         )
         return list(result.scalars().all())
 
+    async def get_by_organization(self, org_id: uuid.UUID, skip: int = 0, limit: int = 50) -> List[Task]:
+        from app.models.project import Project
+        result = await self.db.execute(
+            select(Task)
+            .join(Project, Task.project_id == Project.id)
+            .where(Project.organization_id == org_id)
+            .order_by(Task.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
+    async def get_org_stats(self, org_id: uuid.UUID) -> dict:
+        from app.models.project import Project
+        now = datetime.now(timezone.utc)
+        result = await self.db.execute(
+            select(
+                func.count(Task.id).label("total"),
+                func.count(case((Task.status == TaskStatus.DONE, 1))).label("done"),
+                func.count(case((Task.status == TaskStatus.IN_PROGRESS, 1))).label("in_progress"),
+                func.count(case((Task.status == TaskStatus.TODO, 1))).label("todo"),
+                func.count(case((Task.status == TaskStatus.REVIEW, 1))).label("review"),
+                func.count(case((
+                    and_(Task.due_date < now, Task.status != TaskStatus.DONE, Task.due_date.isnot(None)), 1
+                ))).label("overdue"),
+            )
+            .join(Project, Task.project_id == Project.id)
+            .where(Project.organization_id == org_id)
+        )
+        row = result.one()
+        return {
+            "total": row.total,
+            "done": row.done,
+            "in_progress": row.in_progress,
+            "todo": row.todo,
+            "review": row.review,
+            "overdue": row.overdue,
+        }
+
+    async def get_org_team_performance(self, org_id: uuid.UUID) -> List[dict]:
+        from app.models.project import Project
+        result = await self.db.execute(
+            select(
+                Task.assigned_to,
+                func.count(Task.id).label("assigned"),
+                func.count(case((Task.status == TaskStatus.DONE, 1))).label("completed"),
+            )
+            .join(Project, Task.project_id == Project.id)
+            .where(Project.organization_id == org_id, Task.assigned_to.isnot(None))
+            .group_by(Task.assigned_to)
+        )
+        return [
+            {"user_id": row.assigned_to, "assigned": row.assigned, "completed": row.completed}
+            for row in result
+        ]
+
+    async def get_org_productivity_trends(self, org_id: uuid.UUID, start: datetime, end: datetime) -> List[dict]:
+        from app.models.project import Project
+        from sqlalchemy import cast, Date
+        created_q = await self.db.execute(
+            select(
+                cast(Task.created_at, Date).label("day"),
+                func.count(Task.id).label("cnt"),
+            )
+            .join(Project, Task.project_id == Project.id)
+            .where(Project.organization_id == org_id, Task.created_at >= start, Task.created_at < end)
+            .group_by(cast(Task.created_at, Date))
+        )
+        created_map = {str(row.day): row.cnt for row in created_q}
+
+        completed_q = await self.db.execute(
+            select(
+                cast(Task.completed_at, Date).label("day"),
+                func.count(Task.id).label("cnt"),
+            )
+            .join(Project, Task.project_id == Project.id)
+            .where(Project.organization_id == org_id, Task.completed_at >= start, Task.completed_at < end, Task.completed_at.isnot(None))
+            .group_by(cast(Task.completed_at, Date))
+        )
+        completed_map = {str(row.day): row.cnt for row in completed_q}
+
+        return [{"created": created_map, "completed": completed_map}]
+
     async def get_by_project(self, project_id: uuid.UUID, skip: int = 0, limit: int = 50) -> List[Task]:
         result = await self.db.execute(
             select(Task)

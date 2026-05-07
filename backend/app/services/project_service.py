@@ -32,7 +32,7 @@ class ProjectService:
 
     async def list_projects(self, current_user: User, skip: int = 0, limit: int = 50) -> List[ProjectListResponse]:
         if current_user.role == UserRole.ADMIN:
-            projects = await self.project_repo.get_all(skip, limit)
+            projects = await self.project_repo.get_by_organization(current_user.organization_id, skip, limit)
         else:
             projects = await self.project_repo.get_user_projects(current_user.id, skip, limit)
 
@@ -98,6 +98,7 @@ class ProjectService:
             status=data.status,
             priority=data.priority,
             owner_id=current_user.id,
+            organization_id=current_user.organization_id,
         )
         project = await self.project_repo.create(project)
 

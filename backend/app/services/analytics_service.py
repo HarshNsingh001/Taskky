@@ -35,8 +35,8 @@ class AnalyticsService:
     async def get_dashboard(self, current_user: User) -> DashboardAnalytics:
         if current_user.role != UserRole.ADMIN:
             raise ForbiddenException("Only admins can access analytics dashboard")
-
-        all_stats = await self.task_repo.get_all_stats()
+        org_id = current_user.organization_id
+        all_stats = await self.task_repo.get_org_stats(org_id)
 
         task_stats = TaskStats(
             total=all_stats["total"],
@@ -47,15 +47,16 @@ class AnalyticsService:
             overdue=all_stats["overdue"],
         )
 
+        project_count = len(await self.project_repo.get_by_organization(org_id, limit=1000))
         project_stats = ProjectStats(
-            total=await self.project_repo.count_all(),
-            active=await self.project_repo.count_by_status(ProjectStatus.ACTIVE.value),
-            completed=await self.project_repo.count_by_status(ProjectStatus.COMPLETED.value),
-            on_hold=await self.project_repo.count_by_status(ProjectStatus.ON_HOLD.value),
+            total=project_count,
+            active=0,
+            completed=0,
+            on_hold=0,
         )
 
-        perf_data = await self.task_repo.get_team_performance_bulk()
-        users = await self.user_repo.get_all(limit=100)
+        perf_data = await self.task_repo.get_org_team_performance(org_id)
+        users = await self.user_repo.get_by_organization(org_id, limit=100)
         user_map = {u.id: u for u in users}
 
         team_perf = []
@@ -76,7 +77,7 @@ class AnalyticsService:
         start = (now - timedelta(days=6)).replace(hour=0, minute=0, second=0, microsecond=0)
         end = now + timedelta(days=1)
 
-        trend_data = await self.task_repo.get_productivity_trends_bulk(start, end)
+        trend_data = await self.task_repo.get_org_productivity_trends(org_id, start, end)
         created_map = trend_data[0]["created"] if trend_data else {}
         completed_map = trend_data[0]["completed"] if trend_data else {}
 
@@ -104,8 +105,10 @@ class AnalyticsService:
         end_of_day = start_of_day + timedelta(days=1)
         
         due_today_result = await self.db.execute(
-            select(Task).where(
-                and_(Task.due_date >= start_of_day, Task.due_date < end_of_day, Task.status != TaskStatus.DONE)
+            select(Task)
+            .join(Project, Task.project_id == Project.id)
+            .where(
+                and_(Project.organization_id == org_id, Task.due_date >= start_of_day, Task.due_date < end_of_day, Task.status != TaskStatus.DONE)
             )
         )
         due_today_tasks = due_today_result.scalars().all()
@@ -136,8 +139,10 @@ class AnalyticsService:
 
         # Upcoming Deadlines
         upcoming_q = await self.db.execute(
-            select(Task).where(
-                and_(Task.due_date >= now, Task.status != TaskStatus.DONE)
+            select(Task)
+            .join(Project, Task.project_id == Project.id)
+            .where(
+                and_(Project.organization_id == org_id, Task.due_date >= now, Task.status != TaskStatus.DONE)
             ).order_by(asc(Task.due_date)).limit(5)
         )
         upcoming_tasks = upcoming_q.scalars().all()
@@ -145,7 +150,9 @@ class AnalyticsService:
         
         # Top Projects
         projects_q = await self.db.execute(
-            select(Project).order_by(desc(Project.created_at)).limit(5)
+            select(Project)
+            .where(Project.organization_id == org_id)
+            .order_by(desc(Project.created_at)).limit(5)
         )
         top_projects_list = projects_q.scalars().all()
         project_ids = [p.id for p in top_projects_list]
@@ -162,7 +169,11 @@ class AnalyticsService:
 
         # Recent Activity
         activity_q = await self.db.execute(
-            select(ActivityLog).options(selectinload(ActivityLog.user)).order_by(desc(ActivityLog.timestamp)).limit(10)
+            select(ActivityLog)
+            .join(User, ActivityLog.user_id == User.id)
+            .where(User.organization_id == org_id)
+            .options(selectinload(ActivityLog.user))
+            .order_by(desc(ActivityLog.timestamp)).limit(10)
         )
         activities = activity_q.scalars().all()
         recent_activity = [ActivityLogResponse.model_validate(a) for a in activities]

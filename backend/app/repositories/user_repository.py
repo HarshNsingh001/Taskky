@@ -23,6 +23,17 @@ class UserRepository:
         )
         return list(result.scalars().all())
 
+    async def get_by_organization(self, org_id: uuid.UUID, skip: int = 0, limit: int = 50) -> List[User]:
+        """Get all users belonging to a specific organization"""
+        result = await self.db.execute(
+            select(User)
+            .where(User.organization_id == org_id)
+            .order_by(User.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
     async def create(self, user: User) -> User:
         self.db.add(user)
         await self.db.flush()
@@ -36,4 +47,10 @@ class UserRepository:
 
     async def count(self) -> int:
         result = await self.db.execute(select(User))
+        return len(result.scalars().all())
+
+    async def count_by_organization(self, org_id: uuid.UUID) -> int:
+        result = await self.db.execute(
+            select(User).where(User.organization_id == org_id)
+        )
         return len(result.scalars().all())

@@ -61,7 +61,7 @@ class TaskService:
                 raise ForbiddenException("You do not have access to this project")
             tasks = await self.task_repo.get_by_project(project_id, skip, limit)
         elif current_user.role == UserRole.ADMIN:
-            tasks = await self.task_repo.get_all(skip, limit)
+            tasks = await self.task_repo.get_by_organization(current_user.organization_id, skip, limit)
         else:
             tasks = await self.task_repo.get_assigned_to_user(current_user.id, skip, limit)
 

@@ -201,3 +201,7 @@ export const tasksApi = {
 export const analyticsApi = {
   dashboard: () => api.get("/analytics/dashboard"),
 };
+
+export const organizationApi = {
+  getInfo: () => api.get("/users/organization"),
+};

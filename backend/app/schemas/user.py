@@ -37,6 +37,7 @@ class UserResponse(BaseModel):
     full_name: str
     email: str
     role: str
+    organization_id: uuid.UUID
     avatar_url: Optional[str]
     is_active: bool
     created_at: datetime
