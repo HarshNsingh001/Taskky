@@ -219,13 +219,11 @@ export default function DashboardLayout() {
 
             
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative hover:bg-primary/10 hover:text-primary transition-all rounded-xl">
-                  <Bell className="w-5 h-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full ring-2 ring-background animate-pulse" />
-                  )}
-                </Button>
+              <DropdownMenuTrigger className="relative flex items-center justify-center w-10 h-10 hover:bg-primary/10 hover:text-primary transition-all rounded-xl focus:outline-none">
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full ring-2 ring-background animate-pulse" />
+                )}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80 p-0 rounded-2xl shadow-2xl border-border/40 overflow-hidden">
                 <div className="p-4 bg-muted/30 border-b border-border/40 flex items-center justify-between">
@@ -277,25 +275,23 @@ export default function DashboardLayout() {
             <div className="h-6 w-px bg-border/40 mx-1 hidden sm:block" />
             
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="hidden sm:flex items-center gap-2 rounded-xl font-black text-xs uppercase tracking-widest premium-gradient shadow-lg shadow-primary/20 h-9 px-5">
-                  <Plus className="w-4 h-4" />
-                  Create
-                </Button>
+              <DropdownMenuTrigger className="hidden sm:flex items-center gap-2 rounded-xl font-black text-xs uppercase tracking-widest premium-gradient text-primary-foreground shadow-lg shadow-primary/20 h-9 px-5 focus:outline-none">
+                <Plus className="w-4 h-4" />
+                Create
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl shadow-xl">
-                <DropdownMenuItem asChild className="cursor-pointer">
-                  <Link to="/dashboard/tasks" state={{ create: true }} className="flex items-center gap-2 font-medium">
+                <Link to="/dashboard/tasks" state={{ create: true }}>
+                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2 font-medium">
                     <CheckSquare className="w-4 h-4 text-primary" />
                     New Task
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="cursor-pointer">
-                  <Link to="/dashboard/projects" state={{ create: true }} className="flex items-center gap-2 font-medium">
+                  </DropdownMenuItem>
+                </Link>
+                <Link to="/dashboard/projects" state={{ create: true }}>
+                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2 font-medium">
                     <FolderKanban className="w-4 h-4 text-primary" />
                     New Project
-                  </Link>
-                </DropdownMenuItem>
+                  </DropdownMenuItem>
+                </Link>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
