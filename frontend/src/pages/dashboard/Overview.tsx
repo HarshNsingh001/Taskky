@@ -166,12 +166,12 @@ export default function Overview() {
               <AreaChart data={productivity_trends} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="ovColorCompleted" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ffffff" stopOpacity={0.25}/>
-                    <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--foreground)" stopOpacity={0.25}/>
+                    <stop offset="95%" stopColor="var(--foreground)" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="ovColorAdded" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#22d3ee" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border)" opacity={0.4} />
@@ -181,8 +181,8 @@ export default function Overview() {
                   contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)', backgroundColor: 'var(--card)', padding: '12px' }} 
                   itemStyle={{ fontWeight: '600' }}
                 />
-                <Area type="monotone" name="Tasks Completed" dataKey="completed" stroke="#ffffff" strokeWidth={3} fillOpacity={1} fill="url(#ovColorCompleted)" activeDot={{ r: 6, strokeWidth: 0, fill: '#ffffff' }} />
-                <Area type="monotone" name="Tasks Added" dataKey="added" stroke="#22d3ee" strokeWidth={2} strokeDasharray="5 5" fillOpacity={1} fill="url(#ovColorAdded)" activeDot={{ r: 4, fill: '#22d3ee' }} />
+                <Area type="monotone" name="Tasks Completed" dataKey="completed" stroke="var(--foreground)" strokeWidth={3} fillOpacity={1} fill="url(#ovColorCompleted)" activeDot={{ r: 6, strokeWidth: 0, fill: 'var(--foreground)' }} />
+                <Area type="monotone" name="Tasks Added" dataKey="added" stroke="var(--primary)" strokeWidth={2} strokeDasharray="5 5" fillOpacity={1} fill="url(#ovColorAdded)" activeDot={{ r: 4, fill: 'var(--primary)' }} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
