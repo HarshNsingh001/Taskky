@@ -2,4 +2,4 @@
 buildCommand = "npm install && npm run build"
 
 [deploy]
-startCommand = "serve -s dist -l $PORT"
+startCommand = "node server.js"
