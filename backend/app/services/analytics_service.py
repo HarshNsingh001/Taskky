@@ -203,3 +203,85 @@ class AnalyticsService:
             recent_activity=recent_activity,
             insights=insights
         )
+
+    async def get_member_dashboard(self, current_user: User) -> dict:
+        """Get dashboard data for a member user."""
+        user_id = current_user.id
+
+        # Task stats for this member
+        stats = await self.task_repo.get_member_stats(user_id)
+
+        # Recent tasks
+        recent_tasks = await self.task_repo.get_member_recent_tasks(user_id, limit=8)
+        recent_tasks_data = []
+        for t in recent_tasks:
+            recent_tasks_data.append({
+                "id": str(t.id),
+                "title": t.title,
+                "status": t.status.value,
+                "priority": t.priority.value,
+                "due_date": t.due_date.isoformat() if t.due_date else None,
+                "project_id": str(t.project_id),
+                "updated_at": t.updated_at.isoformat() if t.updated_at else None,
+            })
+
+        # Tasks due soon
+        due_soon = await self.task_repo.get_member_due_soon(user_id, limit=5)
+        due_soon_data = []
+        for t in due_soon:
+            due_soon_data.append({
+                "id": str(t.id),
+                "title": t.title,
+                "status": t.status.value,
+                "priority": t.priority.value,
+                "due_date": t.due_date.isoformat() if t.due_date else None,
+                "project_id": str(t.project_id),
+            })
+
+        # Projects this member is in
+        from app.models.project_member import ProjectMember
+        from app.models.project import Project
+        proj_result = await self.db.execute(
+            select(Project)
+            .join(ProjectMember, ProjectMember.project_id == Project.id)
+            .where(ProjectMember.user_id == user_id)
+            .order_by(Project.created_at.desc())
+        )
+        projects = list(proj_result.scalars().all())
+        projects_data = []
+        for p in projects:
+            projects_data.append({
+                "id": str(p.id),
+                "title": p.title,
+                "status": p.status.value if hasattr(p.status, 'value') else str(p.status),
+                "description": p.description,
+            })
+
+        # Completion rate
+        completion_rate = round((stats["done"] / stats["total"] * 100) if stats["total"] > 0 else 0, 1)
+
+        # Recent activity for this member
+        from app.models.activity_log import ActivityLog
+        activity_result = await self.db.execute(
+            select(ActivityLog)
+            .where(ActivityLog.user_id == user_id)
+            .order_by(ActivityLog.created_at.desc())
+            .limit(10)
+        )
+        activities = list(activity_result.scalars().all())
+        activity_data = []
+        for a in activities:
+            activity_data.append({
+                "action": a.action.value if hasattr(a.action, 'value') else str(a.action),
+                "details": a.details,
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            })
+
+        return {
+            "task_stats": stats,
+            "recent_tasks": recent_tasks_data,
+            "due_soon": due_soon_data,
+            "projects": projects_data,
+            "completion_rate": completion_rate,
+            "recent_activity": activity_data,
+        }

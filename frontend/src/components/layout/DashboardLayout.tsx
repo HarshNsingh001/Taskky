@@ -286,12 +286,14 @@ export default function DashboardLayout() {
                     New Task
                   </DropdownMenuItem>
                 </Link>
-                <Link to="/dashboard/projects" state={{ create: true }}>
-                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2 font-medium">
-                    <FolderKanban className="w-4 h-4 text-primary" />
-                    New Project
-                  </DropdownMenuItem>
-                </Link>
+                {isAdmin && (
+                  <Link to="/dashboard/projects" state={{ create: true }}>
+                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2 font-medium">
+                      <FolderKanban className="w-4 h-4 text-primary" />
+                      New Project
+                    </DropdownMenuItem>
+                  </Link>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

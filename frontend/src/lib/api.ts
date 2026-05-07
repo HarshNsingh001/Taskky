@@ -200,6 +200,7 @@ export const tasksApi = {
 
 export const analyticsApi = {
   dashboard: () => api.get("/analytics/dashboard"),
+  memberDashboard: () => api.get("/analytics/member-dashboard"),
 };
 
 export const organizationApi = {

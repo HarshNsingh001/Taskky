@@ -35,12 +35,19 @@ export default function Overview() {
     }
   }, [lastRefreshEvent]);
 
+  const [memberData, setMemberData] = useState<any>(null);
+
   const loadData = async () => {
     try {
       if (isAdmin) {
         const res = await analyticsApi.dashboard();
         if (res.success) {
           setData(res.data);
+        }
+      } else {
+        const res = await analyticsApi.memberDashboard();
+        if (res.success) {
+          setMemberData(res.data);
         }
       }
     } catch (err) {
@@ -66,7 +73,7 @@ export default function Overview() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  if (loading || !data) {
+  if (loading || (isAdmin && !data) || (!isAdmin && !memberData)) {
     return (
       <div className="space-y-6 max-w-[1400px] mx-auto w-full p-4 lg:p-8 animate-in fade-in duration-700">
         <div className="flex justify-between items-center">
@@ -81,6 +88,175 @@ export default function Overview() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 h-[400px] bg-muted/30 rounded-2xl animate-pulse border border-border/40"></div>
           <div className="h-[400px] bg-muted/30 rounded-2xl animate-pulse border border-border/40"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── MEMBER DASHBOARD ───
+  if (!isAdmin && memberData) {
+    const { task_stats: mStats, recent_tasks, due_soon, projects: myProjects, completion_rate, recent_activity: mActivity } = memberData;
+    const PRIORITY_COLORS: Record<string, string> = { high: 'text-rose-500 bg-rose-500/10', medium: 'text-amber-500 bg-amber-500/10', low: 'text-emerald-500 bg-emerald-500/10', urgent: 'text-red-600 bg-red-600/10' };
+    const STATUS_COLORS: Record<string, string> = { todo: 'text-muted-foreground bg-muted', in_progress: 'text-blue-600 bg-blue-500/10', review: 'text-amber-600 bg-amber-500/10', done: 'text-emerald-600 bg-emerald-500/10' };
+
+    const memberStatCards = [
+      { title: 'Assigned to Me', value: mStats.total, icon: Target, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+      { title: 'Completed', value: mStats.done, icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+      { title: 'In Progress', value: mStats.in_progress, icon: Activity, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+      { title: 'Overdue', value: mStats.overdue, icon: AlertTriangle, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+    ];
+
+    return (
+      <div className="space-y-6 max-w-[1400px] mx-auto w-full p-4 lg:p-8 animate-in fade-in duration-700">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Welcome back, {user?.full_name?.split(' ')[0]} 👋
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">Here's your personal work summary</p>
+          </div>
+          <div className="flex items-center gap-2 bg-muted/50 border border-border/40 rounded-xl px-4 py-2">
+            <Target className="w-4 h-4 text-primary" />
+            <span className="text-sm font-bold">{completion_rate}%</span>
+            <span className="text-xs text-muted-foreground">Completion Rate</span>
+          </div>
+        </div>
+
+        {/* Stat Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {memberStatCards.map((stat, i) => (
+            <motion.div key={stat.title} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
+              <Card className="border-border/40 hover:shadow-md transition-all">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center`}>
+                      <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-black tracking-tight">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground font-medium mt-0.5">{stat.title}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recent Tasks */}
+          <div className="lg:col-span-2">
+            <Card className="border-border/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-primary" /> My Recent Tasks
+                </CardTitle>
+                <CardDescription className="text-xs">Latest tasks assigned to you</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                {recent_tasks.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground text-sm">No tasks assigned yet.</div>
+                ) : (
+                  <div className="divide-y divide-border/40">
+                    {recent_tasks.map((task: any) => (
+                      <Link key={task.id} to="/dashboard/tasks" className="flex items-center gap-4 px-6 py-3 hover:bg-muted/30 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{task.title}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {task.due_date ? `Due ${formatDate(task.due_date)}` : 'No deadline'}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className={`text-[9px] uppercase tracking-wider font-bold shrink-0 ${STATUS_COLORS[task.status] || ''}`}>
+                          {task.status.replace('_', ' ')}
+                        </Badge>
+                        <Badge variant="outline" className={`text-[9px] uppercase tracking-wider font-bold shrink-0 ${PRIORITY_COLORS[task.priority] || ''}`}>
+                          {task.priority}
+                        </Badge>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Upcoming Deadlines */}
+            <Card className="border-border/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-amber-500" /> Due Soon
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {due_soon.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No upcoming deadlines 🎉</p>
+                ) : (
+                  due_soon.map((task: any) => (
+                    <div key={task.id} className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${task.priority === 'high' || task.priority === 'urgent' ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{task.title}</p>
+                        <p className="text-[10px] text-muted-foreground">{formatDate(task.due_date)}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            {/* My Projects */}
+            <Card className="border-border/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-blue-500" /> My Projects
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {myProjects.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Not assigned to any project yet.</p>
+                ) : (
+                  myProjects.map((p: any) => (
+                    <Link key={p.id} to="/dashboard/projects" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/40 transition-colors">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                        {p.title.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{p.title}</p>
+                        <p className="text-[10px] text-muted-foreground capitalize">{p.status}</p>
+                      </div>
+                    </Link>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Recent Activity */}
+            <Card className="border-border/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-purple-500" /> Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {mActivity.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No activity yet.</p>
+                ) : (
+                  mActivity.slice(0, 5).map((a: any, i: number) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium truncate">{a.details}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     );

@@ -17,3 +17,13 @@ async def get_dashboard(
     service = AnalyticsService(db)
     analytics = await service.get_dashboard(current_user)
     return success_response(data=analytics.model_dump(), message="Dashboard analytics retrieved")
+
+
+@router.get("/member-dashboard")
+async def get_member_dashboard(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = AnalyticsService(db)
+    data = await service.get_member_dashboard(current_user)
+    return success_response(data=data, message="Member dashboard retrieved")

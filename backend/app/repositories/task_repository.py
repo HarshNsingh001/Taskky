@@ -243,3 +243,55 @@ class TaskRepository:
             select(func.count(Task.id)).where(Task.completed_at >= start, Task.completed_at < end)
         )
         return result.scalar() or 0
+
+    async def get_member_stats(self, user_id: uuid.UUID) -> dict:
+        """Get task stats for a specific member."""
+        now = datetime.now(timezone.utc)
+        result = await self.db.execute(
+            select(
+                func.count(Task.id).label("total"),
+                func.count(case((Task.status == TaskStatus.DONE, 1))).label("done"),
+                func.count(case((Task.status == TaskStatus.IN_PROGRESS, 1))).label("in_progress"),
+                func.count(case((Task.status == TaskStatus.TODO, 1))).label("todo"),
+                func.count(case((Task.status == TaskStatus.REVIEW, 1))).label("review"),
+                func.count(case((
+                    and_(Task.due_date < now, Task.status != TaskStatus.DONE, Task.due_date.isnot(None)), 1
+                ))).label("overdue"),
+            )
+            .where(Task.assigned_to == user_id)
+        )
+        row = result.one()
+        return {
+            "total": row.total,
+            "done": row.done,
+            "in_progress": row.in_progress,
+            "todo": row.todo,
+            "review": row.review,
+            "overdue": row.overdue,
+        }
+
+    async def get_member_recent_tasks(self, user_id: uuid.UUID, limit: int = 10) -> List[Task]:
+        """Get recent tasks assigned to a member."""
+        result = await self.db.execute(
+            select(Task)
+            .where(Task.assigned_to == user_id)
+            .order_by(Task.updated_at.desc())
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
+    async def get_member_due_soon(self, user_id: uuid.UUID, limit: int = 5) -> List[Task]:
+        """Get tasks due soon for a member (not completed, ordered by due date)."""
+        now = datetime.now(timezone.utc)
+        result = await self.db.execute(
+            select(Task)
+            .where(
+                Task.assigned_to == user_id,
+                Task.status != TaskStatus.DONE,
+                Task.due_date.isnot(None),
+                Task.due_date >= now,
+            )
+            .order_by(Task.due_date.asc())
+            .limit(limit)
+        )
+        return list(result.scalars().all())
