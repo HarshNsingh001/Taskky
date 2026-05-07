@@ -227,7 +227,7 @@ export default function DashboardLayout() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80 p-0 rounded-2xl shadow-2xl border-border/40 overflow-hidden">
                 <div className="p-4 bg-muted/30 border-b border-border/40 flex items-center justify-between">
-                  <DropdownMenuLabel className="p-0 font-bold">Notifications</DropdownMenuLabel>
+                  <span className="text-sm font-bold text-foreground">Notifications</span>
                   {unreadCount > 0 && (
                     <Button variant="ghost" size="sm" onClick={markAllAsRead} className="h-7 text-[10px] uppercase tracking-widest font-bold text-primary hover:bg-primary/10">
                       Mark all read
