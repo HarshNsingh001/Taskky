@@ -377,55 +377,64 @@ export default function Tasks() {
                               </Badge>
                             )}
                           </div>
-                          <div onClick={e => e.stopPropagation()}>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 -mr-1 -mt-1 text-muted-foreground hover:bg-muted hover:text-foreground outline-none transition-all">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48 font-sans">
-                                {isAdmin && col.id !== 'done' && (
-                                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={(e) => { e.stopPropagation(); openEditDialog(task); }}>
-                                    <Edit2 className="w-3.5 h-3.5" />
-                                    Edit Task
-                                  </DropdownMenuItem>
-                                )}
-                                
-                                {col.id === 'in_progress' && (
-                                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-amber-600 focus:text-amber-600 focus:bg-amber-500/10" onClick={(e) => { e.stopPropagation(); handleStatusChange(task.id, 'review'); }}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                                    Submit for Review
-                                  </DropdownMenuItem>
-                                )}
-
-                                {isAdmin && col.id === 'review' && (
-                                  <>
-                                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-emerald-600 focus:text-emerald-600 focus:bg-emerald-500/10" onClick={(e) => { e.stopPropagation(); handleStatusChange(task.id, 'done'); }}>
-                                      <CheckCircle2 className="w-3.5 h-3.5" />
-                                      Approve & Complete
+                          {(isAdmin || col.id === 'todo' || col.id === 'in_progress') && (
+                            <div onClick={e => e.stopPropagation()}>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 -mr-1 -mt-1 text-muted-foreground hover:bg-muted hover:text-foreground outline-none transition-all">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48 font-sans">
+                                  {isAdmin && col.id !== 'done' && (
+                                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={(e) => { e.stopPropagation(); openEditDialog(task); }}>
+                                      <Edit2 className="w-3.5 h-3.5" />
+                                      Edit Task
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-rose-600 focus:text-rose-600 focus:bg-rose-500/10" onClick={(e) => { e.stopPropagation(); handleStatusChange(task.id, 'todo'); }}>
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-                                      Return to To Do
+                                  )}
+                                  
+                                  {col.id === 'todo' && (
+                                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-primary focus:text-primary focus:bg-primary/10" onClick={(e) => { e.stopPropagation(); handleStatusChange(task.id, 'in_progress'); }}>
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-play"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                      Start Task
                                     </DropdownMenuItem>
-                                  </>
-                                )}
+                                  )}
 
-                                {isAdmin && col.id === 'todo' && (
-                                  <DropdownMenuItem className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2" onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}>
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    Delete Task
-                                  </DropdownMenuItem>
-                                )}
-                                
-                                {isAdmin && col.id === 'done' && (
-                                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={(e) => { e.stopPropagation(); handleStatusChange(task.id, 'todo'); }}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                                    Reopen Task
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                                  {col.id === 'in_progress' && (
+                                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-amber-600 focus:text-amber-600 focus:bg-amber-500/10" onClick={(e) => { e.stopPropagation(); handleStatusChange(task.id, 'review'); }}>
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                      Submit for Review
+                                    </DropdownMenuItem>
+                                  )}
+
+                                  {isAdmin && col.id === 'review' && (
+                                    <>
+                                      <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-emerald-600 focus:text-emerald-600 focus:bg-emerald-500/10" onClick={(e) => { e.stopPropagation(); handleStatusChange(task.id, 'done'); }}>
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        Approve & Complete
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-rose-600 focus:text-rose-600 focus:bg-rose-500/10" onClick={(e) => { e.stopPropagation(); handleStatusChange(task.id, 'todo'); }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                                        Return to To Do
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+
+                                  {isAdmin && col.id === 'todo' && (
+                                    <DropdownMenuItem className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2" onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}>
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      Delete Task
+                                    </DropdownMenuItem>
+                                  )}
+                                  
+                                  {isAdmin && col.id === 'done' && (
+                                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={(e) => { e.stopPropagation(); handleStatusChange(task.id, 'todo'); }}>
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                      Reopen Task
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          )}
                         </div>
 
                         <p className={`text-xs font-medium leading-relaxed mb-3 pr-2 ${col.id === 'done' ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
