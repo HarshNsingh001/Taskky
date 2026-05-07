@@ -9,17 +9,27 @@ import { Switch } from '@/components/ui/switch';
 import { useState, useEffect } from 'react';
 import { useTheme } from '../../components/theme-provider';
 import { useAuth } from '../../context/AuthContext';
-import { usersApi } from '../../lib/api';
+import { usersApi, organizationApi } from '../../lib/api';
 import { toast } from 'sonner';
-import { Edit2, Check, X, Loader2 } from 'lucide-react';
+import { Edit2, Check, X, Loader2, Copy, Building2 } from 'lucide-react';
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, isAdmin } = useAuth();
   
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [saving, setSaving] = useState(false);
+  const [orgInfo, setOrgInfo] = useState<any>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  useEffect(() => {
+    if (isAdmin) {
+      organizationApi.getInfo().then(res => {
+        if (res.success && res.data) setOrgInfo(res.data);
+      }).catch(() => {});
+    }
+  }, [isAdmin]);
 
   useEffect(() => {
     if (user?.full_name) setFullName(user.full_name);
@@ -59,6 +69,7 @@ export default function Settings() {
       <Tabs defaultValue="profile" className="flex flex-col space-y-6">
         <TabsList className="bg-muted/50 border border-border/50 p-1 w-full sm:w-fit h-auto inline-flex items-center">
           <TabsTrigger value="profile" className="text-sm px-6 py-1.5 data-[state=active]:shadow-sm">Profile</TabsTrigger>
+          {isAdmin && <TabsTrigger value="workspace" className="text-sm px-6 py-1.5 data-[state=active]:shadow-sm">Workspace</TabsTrigger>}
           <TabsTrigger value="appearance" className="text-sm px-6 py-1.5 data-[state=active]:shadow-sm">Appearance</TabsTrigger>
           <TabsTrigger value="notifications" className="text-sm px-6 py-1.5 data-[state=active]:shadow-sm">Notifications</TabsTrigger>
         </TabsList>
@@ -128,6 +139,60 @@ export default function Settings() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {isAdmin && (
+          <TabsContent value="workspace" className="m-0 space-y-6">
+            <Card className="shadow-sm border-border/50">
+              <CardHeader className="border-b border-border/40">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-semibold">{orgInfo?.name || 'Your Workspace'}</CardTitle>
+                    <CardDescription className="text-xs">Organization settings & team invite code</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Team Invite Code</Label>
+                  <p className="text-[11px] text-muted-foreground">Share this code with team members so they can sign up and join your workspace.</p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <div className="flex-1 bg-muted/50 border border-border rounded-xl px-4 py-3 font-mono text-lg font-bold tracking-widest text-foreground">
+                      {orgInfo?.invite_code || '...'}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-12 w-12 rounded-xl shrink-0"
+                      onClick={() => {
+                        if (orgInfo?.invite_code) {
+                          navigator.clipboard.writeText(orgInfo.invite_code);
+                          setCodeCopied(true);
+                          toast.success('Invite code copied to clipboard!');
+                          setTimeout(() => setCodeCopied(false), 2000);
+                        }
+                      }}
+                    >
+                      {codeCopied ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5" />}
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Workspace Name</Label>
+                    <Input value={orgInfo?.name || ''} disabled className="h-9 text-sm bg-muted/30" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Created At</Label>
+                    <Input value={orgInfo?.created_at ? new Date(orgInfo.created_at).toLocaleDateString() : ''} disabled className="h-9 text-sm bg-muted/30" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="appearance" className="m-0 space-y-6">
           <Card className="shadow-sm border-border/50">

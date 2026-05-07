@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, UserPlus, Mail, Loader2 } from 'lucide-react';
-import { projectsApi, usersApi } from '../../lib/api';
+import { Search, UserPlus, Mail, Loader2, Copy, Check } from 'lucide-react';
+import { projectsApi, usersApi, organizationApi } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useWebSocket } from '../../context/WebSocketContext';
 import { toast } from 'sonner';
@@ -26,6 +26,8 @@ export default function Team() {
   const [inviteProjectId, setInviteProjectId] = useState('');
   const [inviteProjectMembers, setInviteProjectMembers] = useState<any[]>([]);
   const [inviting, setInviting] = useState(false);
+  const [orgInviteCode, setOrgInviteCode] = useState('');
+  const [codeCopied, setCodeCopied] = useState(false);
   const { lastRefreshEvent } = useWebSocket();
 
   useEffect(() => { 
@@ -52,12 +54,14 @@ export default function Team() {
 
   const loadData = async () => {
     try {
-      const [projRes, usersRes] = await Promise.all([
+      const [projRes, usersRes, orgRes] = await Promise.all([
         projectsApi.list(),
-        isAdmin ? usersApi.list() : Promise.resolve({ success: true, data: [] })
+        isAdmin ? usersApi.list() : Promise.resolve({ success: true, data: [] }),
+        isAdmin ? organizationApi.getInfo() : Promise.resolve({ success: false }),
       ]);
       
       if (usersRes.success) setAllUsers(usersRes.data || []);
+      if (orgRes.success && orgRes.data) setOrgInviteCode(orgRes.data.invite_code || '');
       
       if (projRes.success && projRes.data?.length > 0) {
         setProjects(projRes.data);
@@ -144,11 +148,21 @@ export default function Team() {
           <h1 className="text-2xl font-bold tracking-tight">Team</h1>
           <div className="flex items-center gap-3 mt-0.5">
             <p className="text-muted-foreground text-sm">View and manage project team members.</p>
-            {isAdmin && (
-              <div className="flex items-center gap-2 bg-muted px-2.5 py-0.5 rounded-md text-xs font-medium border border-border/50">
+            {isAdmin && orgInviteCode && (
+              <button 
+                className="flex items-center gap-2 bg-muted px-2.5 py-0.5 rounded-md text-xs font-medium border border-border/50 hover:bg-muted/80 transition-colors cursor-pointer"
+                onClick={() => {
+                  navigator.clipboard.writeText(orgInviteCode);
+                  setCodeCopied(true);
+                  toast.success('Invite code copied!');
+                  setTimeout(() => setCodeCopied(false), 2000);
+                }}
+                title="Click to copy invite code"
+              >
                 <span className="text-muted-foreground">Invite Code:</span>
-                <span className="font-mono text-primary select-all">TASKKY-TEAM</span>
-              </div>
+                <span className="font-mono text-primary select-all">{orgInviteCode}</span>
+                {codeCopied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+              </button>
             )}
           </div>
         </div>
