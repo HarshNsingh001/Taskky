@@ -7,6 +7,7 @@ type Notification = {
   message: string;
   type: string;
   read: boolean;
+  time: string;
   timestamp: Date;
 };
 
@@ -50,9 +51,19 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+    let isMounted = true;
+    const lastMsgMap = new Map<string, number>(); // dedup: message -> timestamp
+
     const connectWs = () => {
+      // Close existing connection before reconnecting
+      if (ws.current) {
+        ws.current.onclose = null; // prevent reconnect loop
+        ws.current.close();
+        ws.current = null;
+      }
+
       const wsUrl = getWsUrl(user.id);
-      
       const socket = new WebSocket(wsUrl);
       
       socket.onopen = () => {
@@ -63,24 +74,36 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         try {
           const data = JSON.parse(event.data);
           
+          // Dedup: skip if same message received within 2s
+          const msgKey = `${data.type}:${data.message}`;
+          const now = Date.now();
+          if (lastMsgMap.has(msgKey) && now - lastMsgMap.get(msgKey)! < 2000) {
+            return; // skip duplicate
+          }
+          lastMsgMap.set(msgKey, now);
+          // Clean old entries
+          for (const [key, ts] of lastMsgMap) {
+            if (now - ts > 5000) lastMsgMap.delete(key);
+          }
+
+          // Trigger data refresh for refresh events
           if (data.type?.startsWith("refresh_")) {
-            setLastRefreshEvent({ type: data.type, timestamp: Date.now() });
+            setLastRefreshEvent({ type: data.type, timestamp: now });
           }
           
+          // Only create notification + toast for messages
           if (data.message) {
+            const timeStr = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
             const newNotif: Notification = {
               id: Math.random().toString(36).substring(7),
               message: data.message,
               type: data.type,
               read: false,
+              time: timeStr,
               timestamp: new Date()
             };
-            setNotifications(prev => [newNotif, ...prev]);
-            
-            // Show toast for non-refresh events or specific refresh events
-            if (data.type === 'notification' || data.type?.startsWith("refresh_")) {
-              toast.info(data.message);
-            }
+            setNotifications(prev => [newNotif, ...prev.slice(0, 49)]); // keep max 50
+            toast.info(data.message);
           }
         } catch (e) {
           console.error("Error parsing websocket message", e);
@@ -89,7 +112,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
       socket.onclose = () => {
         console.log("WebSocket disconnected. Reconnecting in 3s...");
-        setTimeout(connectWs, 3000);
+        if (isMounted) {
+          reconnectTimeout = setTimeout(connectWs, 3000);
+        }
       };
 
       socket.onerror = (error) => {
@@ -103,7 +128,10 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     connectWs();
 
     return () => {
+      isMounted = false;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
       if (ws.current) {
+        ws.current.onclose = null; // prevent reconnect on cleanup
         ws.current.close();
         ws.current = null;
       }

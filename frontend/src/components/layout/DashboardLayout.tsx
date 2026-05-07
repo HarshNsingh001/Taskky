@@ -243,11 +243,11 @@ export default function DashboardLayout() {
                       <p className="text-sm font-medium">No new notifications</p>
                     </div>
                   ) : (
-                    notifications.map((notif, idx) => (
+                    notifications.map((notif) => (
                       <DropdownMenuItem 
-                        key={idx} 
+                        key={notif.id} 
                         className={`p-4 cursor-pointer border-b border-border/20 last:border-0 focus:bg-primary/5 ${!notif.read ? 'bg-primary/[0.03]' : ''}`}
-                        onClick={() => markAsRead(idx)}
+                        onClick={() => markAsRead(notif.id)}
                       >
                         <div className="flex gap-3">
                           <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${notif.read ? 'bg-transparent' : 'bg-primary'}`} />

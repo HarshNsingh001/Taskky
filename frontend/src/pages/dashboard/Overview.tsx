@@ -46,12 +46,33 @@ export default function Overview() {
         }
       } else {
         const res = await analyticsApi.memberDashboard();
-        if (res.success) {
+        if (res.success && res.data) {
           setMemberData(res.data);
+        } else {
+          // Set empty fallback so page doesn't stay on skeleton
+          setMemberData({
+            task_stats: { total: 0, done: 0, in_progress: 0, todo: 0, review: 0, overdue: 0 },
+            recent_tasks: [],
+            due_soon: [],
+            projects: [],
+            completion_rate: 0,
+            recent_activity: [],
+          });
         }
       }
     } catch (err) {
-      console.error(err);
+      console.error('Dashboard load error:', err);
+      if (!isAdmin) {
+        // Set fallback for member so the page doesn't stay stuck
+        setMemberData({
+          task_stats: { total: 0, done: 0, in_progress: 0, todo: 0, review: 0, overdue: 0 },
+          recent_tasks: [],
+          due_soon: [],
+          projects: [],
+          completion_rate: 0,
+          recent_activity: [],
+        });
+      }
     } finally {
       setLoading(false);
     }
