@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import { useEffect, useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -7,11 +7,88 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, UserPlus, Mail, Loader2, Copy, Check } from 'lucide-react';
+import { Search, UserPlus, Mail, Loader2, Copy, Check, ChevronDown, FolderKanban, User as UserIcon } from 'lucide-react';
 import { projectsApi, usersApi, organizationApi } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useWebSocket } from '../../context/WebSocketContext';
 import { toast } from 'sonner';
+
+// --- Glass Dropdown Component ---
+function GlassDropdown({ value, onChange, options, placeholder, icon: Icon, renderOption }: {
+  value: string;
+  onChange: (val: string) => void;
+  options: { id: string; label: string; sub?: string }[];
+  placeholder?: string;
+  icon?: React.ElementType;
+  renderOption?: (opt: { id: string; label: string; sub?: string }, isSelected: boolean) => React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const selected = options.find(o => o.id === value);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="group flex items-center gap-2.5 h-9 px-3.5 rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 text-sm font-medium text-foreground min-w-[160px]"
+      >
+        {Icon && <Icon className="w-4 h-4 text-primary/70 shrink-0" />}
+        <span className="truncate flex-1 text-left">{selected?.label || placeholder || 'Select...'}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+            className="absolute top-[calc(100%+6px)] left-0 z-50 min-w-[220px] max-h-[280px] overflow-y-auto rounded-xl border border-border/40 bg-card/70 backdrop-blur-xl shadow-xl shadow-black/10 ring-1 ring-white/[0.06] p-1.5"
+          >
+            {options.length === 0 ? (
+              <div className="px-3 py-4 text-xs text-muted-foreground text-center">No options available</div>
+            ) : (
+              options.map(opt => {
+                const isSelected = opt.id === value;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => { onChange(opt.id); setOpen(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-150 text-left ${
+                      isSelected
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-foreground hover:bg-muted/60'
+                    }`}
+                  >
+                    {renderOption ? renderOption(opt, isSelected) : (
+                      <>
+                        <span className="flex-1 truncate">{opt.label}</span>
+                        {opt.sub && <span className="text-[10px] text-muted-foreground truncate">{opt.sub}</span>}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
+                      </>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function Team() {
   const { isAdmin } = useAuth();
@@ -176,17 +253,23 @@ export default function Team() {
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
                   <Label>Project</Label>
-                  <select className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm" value={inviteProjectId} onChange={e => { setInviteProjectId(e.target.value); setInviteUserId(''); }}>
-                    <option value="">Select project</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-                  </select>
+                  <GlassDropdown
+                    value={inviteProjectId}
+                    onChange={(val) => { setInviteProjectId(val); setInviteUserId(''); }}
+                    options={projects.map(p => ({ id: p.id, label: p.title }))}
+                    placeholder="Select project"
+                    icon={FolderKanban}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Select User</Label>
-                  <select className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm disabled:opacity-50" value={inviteUserId} onChange={e => setInviteUserId(e.target.value)} disabled={!inviteProjectId}>
-                    <option value="">{inviteProjectId ? (availableUsersToInvite.length > 0 ? 'Choose a user' : 'All users are already in this project') : 'Select project first'}</option>
-                    {availableUsersToInvite.map(u => <option key={u.id} value={u.id}>{u.full_name} ({u.email})</option>)}
-                  </select>
+                  <GlassDropdown
+                    value={inviteUserId}
+                    onChange={setInviteUserId}
+                    options={availableUsersToInvite.map(u => ({ id: u.id, label: u.full_name, sub: u.email }))}
+                    placeholder={!inviteProjectId ? 'Select project first' : (availableUsersToInvite.length > 0 ? 'Choose a user' : 'All added')}
+                    icon={UserIcon}
+                  />
                 </div>
                 <Button className="w-full" onClick={handleInvite} disabled={inviting || !inviteUserId}>
                   {inviting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Adding...</> : 'Add to Project'}
@@ -199,9 +282,22 @@ export default function Team() {
 
       {projects.length > 0 && (
         <div className="flex items-center gap-4">
-          <select className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm" value={selectedProject} onChange={e => handleProjectChange(e.target.value)}>
-            {projects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-          </select>
+          <GlassDropdown
+            value={selectedProject}
+            onChange={handleProjectChange}
+            options={projects.map(p => ({ id: p.id, label: p.title }))}
+            placeholder="Select project"
+            icon={FolderKanban}
+            renderOption={(opt, isSelected) => (
+              <>
+                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <FolderKanban className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <span className="flex-1 truncate">{opt.label}</span>
+                {isSelected && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
+              </>
+            )}
+          />
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search members..." className="pl-9 h-9 text-sm" value={search} onChange={e => setSearch(e.target.value)} />
