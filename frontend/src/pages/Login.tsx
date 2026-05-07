@@ -148,15 +148,15 @@ export default function Login() {
             className="p-8 rounded-3xl border border-white/20 dark:border-white/10 shadow-2xl backdrop-blur-xl bg-white/30 dark:bg-black/40"
           >
             <blockquote className="text-xl md:text-2xl font-medium mb-8 text-foreground leading-relaxed">
-              "Taskky's interface is a breath of fresh air. It's powerful enough for complex projects but remains beautifully simple."
+              "Taskky transformed how our remote team operates. We ship 30% faster and have zero alignment issues. It's the standard."
             </blockquote>
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full overflow-hidden border border-white/40 shadow-sm">
-                <img src="/harsh.png" alt="User Avatar" className="w-full h-full object-cover" />
+                <img src="/harsh.png" alt="Harsh Narayan Singh" className="w-full h-full object-cover" />
               </div>
               <div>
-                <div className="font-semibold text-foreground">Alex Morgan</div>
-                <div className="text-sm text-foreground/80">Design Director, CreativeCo</div>
+                <div className="font-semibold text-foreground">Harsh Narayan Singh</div>
+                <div className="text-sm text-foreground/80">Founder & CEO, Taskky</div>
               </div>
             </div>
           </motion.div>
