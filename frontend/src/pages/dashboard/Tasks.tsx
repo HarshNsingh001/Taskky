@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +33,8 @@ const PRIORITY_STYLES: Record<string, string> = {
 
 export default function Tasks() {
   const { isAdmin } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +52,14 @@ export default function Tasks() {
     const interval = setInterval(loadData, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (location.state?.create) {
+      openCreateDialog();
+      // Clear state so it doesn't reopen on refresh
+      navigate('.', { replace: true, state: {} });
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (lastRefreshEvent?.type === 'refresh_tasks' || lastRefreshEvent?.type === 'refresh_projects') {

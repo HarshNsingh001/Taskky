@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function Projects() {
   const { isAdmin } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -35,6 +38,14 @@ export default function Projects() {
     const interval = setInterval(loadProjects, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (location.state?.create) {
+      setShowCreate(true);
+      // Clear state so it doesn't reopen on refresh
+      navigate('.', { replace: true, state: {} });
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (lastRefreshEvent?.type === 'refresh_projects') {

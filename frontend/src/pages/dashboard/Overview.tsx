@@ -113,14 +113,6 @@ export default function Overview() {
           </h1>
           <p className="text-muted-foreground mt-1">Here's what's happening across your workspace today.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" className="hidden sm:flex" asChild>
-            <Link to="/dashboard/team"><Users className="w-4 h-4 mr-2" /> Invite</Link>
-          </Button>
-          <Button className="shadow-lg shadow-primary/20 transition-transform hover:scale-105" asChild>
-            <Link to="/dashboard/tasks"><Plus className="w-4 h-4 mr-2" /> New Task</Link>
-          </Button>
-        </div>
       </div>
 
       {/* KPI Cards Row */}
