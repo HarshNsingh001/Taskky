@@ -127,20 +127,39 @@ export default function Login() {
         </motion.div>
       </div>
 
-      <div className="hidden lg:block relative bg-muted p-12 overflow-hidden">
-        <div className="absolute inset-0 bg-primary/5"></div>
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-3xl"></div>
-
-        <div className="h-full w-full flex items-center justify-center relative z-10 p-12">
-          <motion.img 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+      <div className="hidden lg:block relative overflow-hidden bg-background">
+        <motion.img 
+            initial={{ scale: 1.05 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
             src="/assets/auth-banner.png" 
             alt="Taskky Illustration" 
-            className="w-full h-auto max-w-lg object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
-          />
+            className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Premium Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent mix-blend-normal"></div>
+        <div className="absolute inset-0 bg-primary/5 mix-blend-overlay"></div>
+        
+        <div className="h-full w-full flex flex-col justify-end relative z-10 p-12">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="p-8 rounded-3xl border border-white/20 dark:border-white/10 shadow-2xl backdrop-blur-xl bg-white/30 dark:bg-black/40"
+          >
+            <blockquote className="text-xl md:text-2xl font-medium mb-8 text-foreground leading-relaxed">
+              "Taskky's interface is a breath of fresh air. It's powerful enough for complex projects but remains beautifully simple."
+            </blockquote>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full overflow-hidden border border-white/40 shadow-sm">
+                <img src="/harsh.png" alt="User Avatar" className="w-full h-full object-cover" />
+              </div>
+              <div>
+                <div className="font-semibold text-foreground">Alex Morgan</div>
+                <div className="text-sm text-foreground/80">Design Director, CreativeCo</div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>
