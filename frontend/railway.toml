@@ -2,4 +2,4 @@
 buildCommand = "npm install && npm run build"
 
 [deploy]
-startCommand = "serve -s dist -l 3000"
+startCommand = "serve -s dist -l $PORT"
