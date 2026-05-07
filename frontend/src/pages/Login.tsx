@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Layers, ArrowLeft } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Layers, ArrowLeft, Loader2 } from 'lucide-react';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -17,8 +17,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
 
   if (user) {
-    navigate('/dashboard', { replace: true });
-    return null;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const validateEmail = (email: string) => {
