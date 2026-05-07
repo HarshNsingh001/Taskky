@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { 
-  CheckCircle2, Clock, Activity, AlertTriangle, ArrowUpRight, 
+  CheckCircle2, Clock, Activity, AlertTriangle, ArrowUpRight, ArrowDownRight,
   Bot, Zap, Target, Plus, Flame, Sparkles, TrendingUp, Users, 
   Briefcase, MessageSquare, CalendarDays, MoreHorizontal
 } from 'lucide-react';
