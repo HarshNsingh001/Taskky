@@ -265,7 +265,7 @@ class AnalyticsService:
         activity_result = await self.db.execute(
             select(ActivityLog)
             .where(ActivityLog.user_id == user_id)
-            .order_by(ActivityLog.created_at.desc())
+            .order_by(ActivityLog.timestamp.desc())
             .limit(10)
         )
         activities = list(activity_result.scalars().all())
@@ -274,7 +274,7 @@ class AnalyticsService:
             activity_data.append({
                 "action": a.action.value if hasattr(a.action, 'value') else str(a.action),
                 "details": a.details,
-                "created_at": a.created_at.isoformat() if a.created_at else None,
+                "created_at": a.timestamp.isoformat() if a.timestamp else None,
             })
 
         return {
