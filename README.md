@@ -1,55 +1,57 @@
-# 🚀 Taskky - Modern Team Task Management & SaaS Platform
+# 🚀 Taskky - Enterprise Task Management & SaaS Platform
 
-Taskky is a high-performance, production-grade task management platform designed for modern teams. Built with a focus on **User Experience (UX)**, **Premium Design**, and **Scalability**, Taskky offers a seamless workflow from project planning to real-time collaboration.
+Taskky is a high-performance, multi-tenant SaaS task management platform designed for modern teams. Built with a focus on **User Experience (UX)**, **Premium Design**, and **Strict Role-Based Workflows**, Taskky offers a seamless and structured approach to project planning and real-time collaboration.
 
 ![Taskky Banner](https://images.unsplash.com/photo-1540350394557-8d14678e7f91?q=80&w=2000&auto=format&fit=crop)
 
-## ✨ Features
+## ✨ Core Features
 
-- **💎 Premium Glassmorphic UI**: A stunning, high-end interface built with Tailwind CSS and Framer Motion.
-- **⚡ Real-time Collaboration**: WebSocket integration for instant notifications and task updates.
-- **📊 Advanced Analytics**: Detailed productivity trends and project tracking for administrative users.
-- **🔐 Secure RBAC**: Robust Role-Based Access Control system for Admins and Team Members.
-- **💳 Subscription Management**: Full SaaS billing flow with pricing tiers and mock invoice generation.
-- **🌓 Dark/Light Mode**: Seamless theme switching with a curated color palette.
-- **📱 Fully Responsive**: Optimized for desktop, tablet, and mobile devices.
+- **🏢 Multi-Tenant Architecture**: Built-in organization isolation. Organizations can easily onboard teams using secure invite codes.
+- **🛡️ Strict Role-Based Access Control (RBAC)**: 
+  - **Admins**: Full organizational oversight, project creation, team management, and final task approval authority.
+  - **Members**: Isolated personalized dashboards, restricted project visibility, and constrained workflow actions.
+- **🔄 Intelligent Task Workflow**: Enforces a rigid pipeline (`To Do ➔ In Progress ➔ Review ➔ Done`). Members can only submit tasks for review, while Admins hold the power to Approve or Reject.
+- **🔁 Task Revision Tracking**: Features an automatic "bounce counter" that tracks and displays how many times a task was rejected by an admin, providing visual metrics on rework and task difficulty.
+- **⚡ Targeted Real-Time Notifications**: Highly optimized WebSocket architecture that routes specific events to targeted roles (e.g., Admins are instantly notified when a task enters Review; Members are pinged upon task approval/rejection).
+- **📊 Personalized Analytics**: Dedicated dashboard views scoped automatically by role—Org-wide analytics for Admins, and personal performance tracking for Members.
+- **💎 Premium Glassmorphic UI**: A stunning, high-end interface built with Tailwind CSS, Framer Motion, and a carefully curated aesthetic.
 
 ## 🛠 Tech Stack
 
 ### Frontend
-- **React (Vite)**
-- **Tailwind CSS** (Custom Design System)
-- **Framer Motion** (Premium Animations)
-- **Lucide React** (Iconography)
-- **Shadcn UI** (Components)
-- **Sonner** (Toast Notifications)
+- **React (Vite) & TypeScript**
+- **Tailwind CSS** (Custom Design System & Glassmorphism)
+- **Framer Motion** (Premium Micro-animations)
+- **Lucide React** (Modern Iconography)
+- **Radix UI / Shadcn** (Accessible Components)
 
 ### Backend
-- **FastAPI** (Python)
-- **SQLAlchemy 2.0** (ORM)
-- **PostgreSQL** (Database)
-- **Pydantic V2** (Data Validation)
-- **WebSockets** (Real-time)
-- **Alembic** (Database Migrations)
+- **FastAPI** (High-performance Python framework)
+- **SQLAlchemy 2.0** (Async ORM)
+- **PostgreSQL** (Relational Database)
+- **Pydantic V2** (Strict Data Validation)
+- **WebSockets** (Connection Manager for Live Updates)
+- **Alembic** (Automated Database Migrations)
 
 ## 📁 Project Structure
 
 ```bash
 Taskky/
 ├── backend/                # FastAPI Application
+│   ├── alembic/            # Database Migrations
 │   ├── app/                # Core Logic
-│   │   ├── api/            # API Routes
-│   │   ├── core/           # Config & DB
+│   │   ├── api/            # REST API & WebSocket Routes
+│   │   ├── core/           # Config & Auth Dependencies
 │   │   ├── models/         # SQLAlchemy Models
-│   │   └── services/       # Business Logic
+│   │   └── services/       # Business Logic & RBAC Enforcement
 │   └── Procfile            # Deployment Config
 ├── frontend/               # React (Vite) Application
 │   ├── src/
-│   │   ├── components/     # UI Components
-│   │   ├── context/        # State Management
-│   │   ├── pages/          # Page Views
-│   │   └── theme/          # Design Tokens
-│   └── tailwind.config.js  # Design System Config
+│   │   ├── components/     # UI Components (Dashboards, Modals)
+│   │   ├── context/        # Global State (WebSockets, Auth)
+│   │   ├── pages/          # Board, Team, Analytics Views
+│   │   └── theme/          # CSS Variables & Design Tokens
+│   └── tailwind.config.js  # Custom UI Configuration
 └── README.md
 ```
 
@@ -109,4 +111,4 @@ Taskky is optimized for deployment on **Railway.app**.
 Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
-Built with ❤️ by [Your Name/Team]
+Built with ❤️ by HARSH NARAYAN SINGH
